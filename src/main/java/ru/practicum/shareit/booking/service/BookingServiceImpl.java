@@ -3,12 +3,11 @@ package ru.practicum.shareit.booking.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.dto.BookerDto;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
-import ru.practicum.shareit.booking.dto.ItemBookingDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.booking.storage.BookingMapper;
 import ru.practicum.shareit.booking.storage.BookingRepository;
 import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
@@ -49,7 +48,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.WAITING);
 
         Booking savedBooking = bookingRepository.save(booking);
-        return toBookingResponseDto(savedBooking);
+        return BookingMapper.toBookingResponseDto(savedBooking);
     }
 
     @Override
@@ -68,7 +67,7 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStatus(approved ? BookingStatus.APPROVED : BookingStatus.REJECTED);
         Booking updatedBooking = bookingRepository.save(booking);
-        return toBookingResponseDto(updatedBooking);
+        return BookingMapper.toBookingResponseDto(updatedBooking);
     }
 
     @Override
@@ -81,7 +80,7 @@ public class BookingServiceImpl implements BookingService {
             throw new NotFoundException("Просмотр бронирования доступен только автору или владельцу вещи.");
         }
 
-        return toBookingResponseDto(booking);
+        return BookingMapper.toBookingResponseDto(booking);
     }
 
     @Override
@@ -117,7 +116,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return bookings.stream()
-                .map(this::toBookingResponseDto)
+                .map(BookingMapper::toBookingResponseDto)
                 .collect(Collectors.toList());
     }
 
@@ -154,7 +153,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return bookings.stream()
-                .map(this::toBookingResponseDto)
+                .map(BookingMapper::toBookingResponseDto)
                 .collect(Collectors.toList());
     }
 
@@ -175,25 +174,5 @@ public class BookingServiceImpl implements BookingService {
         if (bookingRequestDto.getStart().isBefore(LocalDateTime.now())) {
             throw new ValidationException("Дата начала не может быть в прошлом.");
         }
-    }
-
-    private BookingResponseDto toBookingResponseDto(Booking booking) {
-        return BookingResponseDto.builder()
-                .id(booking.getId())
-                .start(booking.getStart())
-                .end(booking.getEnd())
-                .status(booking.getStatus())
-                .booker(BookerDto.builder()
-                        .id(booking.getBooker().getId())
-                        .name(booking.getBooker().getName())
-                        .email(booking.getBooker().getEmail())
-                        .build())
-                .item(ItemBookingDto.builder()
-                        .id(booking.getItem().getId())
-                        .name(booking.getItem().getName())
-                        .description(booking.getItem().getDescription())
-                        .available(booking.getItem().getAvailable())
-                        .build())
-                .build();
     }
 }
