@@ -1,4 +1,4 @@
-package ru.practicum.shareit.request.model;
+package ru.practicum.shareit.item.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,32 +9,37 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "requests")
+@Table(name = "comments")
 @Getter
 @Setter
 @ToString
-public class ItemRequest {
+public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String description;
+    private String text;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requestor_id")
+    @JoinColumn(name = "item_id")
     @ToString.Exclude
-    private User requestor;
+    private Item item;
 
-    @Column
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    @ToString.Exclude
+    private User author;
+
+    @Column(nullable = false)
     private LocalDateTime created;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ItemRequest that = (ItemRequest) o;
-        return Objects.equals(id, that.id);
+        Comment comment = (Comment) o;
+        return Objects.equals(id, comment.id);
     }
 
     @Override

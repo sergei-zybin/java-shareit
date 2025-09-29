@@ -8,7 +8,7 @@ import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.storage.UserStorage;
+import ru.practicum.shareit.user.storage.UserRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,21 +16,19 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final UserStorage userStorage;
+    private final UserRepository userRepository;
 
     @Override
     public List<UserDto> getAll() {
-        return userStorage.getAll().stream()
+        return userRepository.findAll().stream()
                 .map(UserMapper::toUserDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public UserDto getById(Long id) {
-        User user = userStorage.getById(id);
-        if (user == null) {
-            throw new NotFoundException("Пользователь с id=" + id + " не найден.");
-        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден."));
         return UserMapper.toUserDto(user);
     }
 
@@ -44,33 +42,30 @@ public class UserServiceImpl implements UserService {
             throw new ValidationException("Некорректный формат email.");
         }
 
-        for (User existingUser : userStorage.getAll()) {
-            if (existingUser.getEmail().equals(userDto.getEmail())) {
-                throw new ConflictException("Пользователь с таким email уже существует.");
-            }
+        if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
+            throw new ConflictException("Пользователь с таким email уже существует.");
         }
 
         User user = UserMapper.toUser(userDto);
-        return UserMapper.toUserDto(userStorage.create(user));
+        return UserMapper.toUserDto(userRepository.save(user));
     }
 
     @Override
     public UserDto update(Long id, UserDto userDto) {
-        User existingUser = userStorage.getById(id);
-        if (existingUser == null) {
-            throw new NotFoundException("Пользователь с id=" + id + " не найден.");
-        }
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден."));
 
         if (userDto.getEmail() != null && !userDto.getEmail().isBlank()) {
             if (!isValidEmail(userDto.getEmail())) {
                 throw new ValidationException("Некорректный формат email.");
             }
 
-            for (User user : userStorage.getAll()) {
-                if (user.getEmail().equals(userDto.getEmail()) && !user.getId().equals(id)) {
-                    throw new ConflictException("Пользователь с таким email уже существует.");
-                }
-            }
+            userRepository.findByEmail(userDto.getEmail())
+                    .ifPresent(user -> {
+                        if (!user.getId().equals(id)) {
+                            throw new ConflictException("Пользователь с таким email уже существует.");
+                        }
+                    });
             existingUser.setEmail(userDto.getEmail());
         }
 
@@ -78,12 +73,15 @@ public class UserServiceImpl implements UserService {
             existingUser.setName(userDto.getName());
         }
 
-        return UserMapper.toUserDto(userStorage.update(existingUser));
+        return UserMapper.toUserDto(userRepository.save(existingUser));
     }
 
     @Override
     public void delete(Long id) {
-        userStorage.delete(id);
+        if (!userRepository.existsById(id)) {
+            throw new NotFoundException("Пользователь с id=" + id + " не найден.");
+        }
+        userRepository.deleteById(id);
     }
 
     private boolean isValidEmail(String email) {
