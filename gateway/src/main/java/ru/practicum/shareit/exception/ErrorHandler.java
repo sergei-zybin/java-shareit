@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -42,6 +43,13 @@ public class ErrorHandler {
     public Map<String, String> handleMissingRequestHeaderException(final MissingRequestHeaderException e) {
         log.error("Missing request header: {}", e.getMessage());
         return Map.of("error", "Required header is missing");
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleMissingServletRequestParameterException(final MissingServletRequestParameterException e) {
+        log.error("Missing request parameter: {}", e.getMessage());
+        return Map.of("error", "Required parameter is missing");
     }
 
     @ExceptionHandler

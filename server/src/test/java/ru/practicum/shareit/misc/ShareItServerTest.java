@@ -8,7 +8,6 @@ class ShareItServerTest {
 
     @Test
     void contextLoads() {
-        // Проверяем, что контекст Spring загружается
         assertTrue(true);
     }
 }
