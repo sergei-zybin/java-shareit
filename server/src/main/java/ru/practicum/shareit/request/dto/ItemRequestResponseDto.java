@@ -1,5 +1,6 @@
 package ru.practicum.shareit.request.dto;
 
+import jdk.jshell.Snippet;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,4 +17,8 @@ public class ItemRequestResponseDto {
     private String description;
     private LocalDateTime created;
     private List<ItemDto> items;
+
+    public static Snippet builder() {
+        return null;
+    }
 }
