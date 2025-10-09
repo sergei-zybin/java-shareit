@@ -11,7 +11,7 @@ class BookingStateLogicTest {
 
     @Test
     void shouldHandleAllStates() {
-        // Проверяем, что все состояния правильно преобразуются из строк
+
         assertStateConversion("all", BookingState.ALL);
         assertStateConversion("ALL", BookingState.ALL);
         assertStateConversion("current", BookingState.CURRENT);

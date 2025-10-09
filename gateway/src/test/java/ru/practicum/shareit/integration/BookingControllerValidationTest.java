@@ -54,7 +54,7 @@ class BookingControllerValidationTest {
     void bookItem_withPastStartDate_shouldReturnBadRequest() throws Exception {
         BookItemRequestDto requestDto = new BookItemRequestDto(
                 1L,
-                LocalDateTime.now().minusDays(1), // Прошлая дата
+                LocalDateTime.now().minusDays(1),
                 LocalDateTime.now().plusDays(1)
         );
 
@@ -87,7 +87,7 @@ class BookingControllerValidationTest {
     @Test
     void bookItem_withNullItemId_shouldReturnBadRequest() throws Exception {
         BookItemRequestDto requestDto = new BookItemRequestDto(
-                null, // null itemId
+                null,
                 LocalDateTime.now().plusDays(1),
                 LocalDateTime.now().plusDays(2)
         );
