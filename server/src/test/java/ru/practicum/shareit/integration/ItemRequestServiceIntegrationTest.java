@@ -12,9 +12,6 @@ import ru.practicum.shareit.request.service.ItemRequestService;
 import ru.practicum.shareit.request.storage.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.storage.UserRepository;
-
-import java.time.LocalDateTime;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
