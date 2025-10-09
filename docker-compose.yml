@@ -1,27 +1,50 @@
+version: '3.8'
+
 services:
   gateway:
-    build: gateway
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
     image: shareit-gateway
     container_name: shareit-gateway
     ports:
       - "8080:8080"
     depends_on:
-      - server
+      server:
+        condition: service_healthy
     environment:
       - SHAREIT_SERVER_URL=http://server:9090
+      - SPRING_PROFILES_ACTIVE=docker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   server:
-    build: server
+    build:
+      context: ./server
+      dockerfile: Dockerfile
     image: shareit-server
     container_name: shareit-server
     ports:
       - "9090:9090"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/shareit
       - SPRING_DATASOURCE_USERNAME=shareit
       - SPRING_DATASOURCE_PASSWORD=shareit
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:16.1
@@ -32,8 +55,13 @@ services:
       - POSTGRES_PASSWORD=shareit
       - POSTGRES_USER=shareit
       - POSTGRES_DB=shareit
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
-      timeout: 5s
+      test: ["CMD-SHELL", "pg_isready -U shareit -d shareit"]
       interval: 5s
+      timeout: 5s
       retries: 10
+
+volumes:
+  postgres_data:
