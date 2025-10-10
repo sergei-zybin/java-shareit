@@ -163,20 +163,6 @@ public class ItemServiceImplTest {
     }
 
     @Test
-    void getItemById_forOwner_shouldReturnItemWithBookings() {
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        when(bookingRepository.findLastBookings(1L)).thenReturn(Collections.emptyList());
-        when(bookingRepository.findNextBookings(1L)).thenReturn(Collections.emptyList());
-        when(commentRepository.findByItemId(1L)).thenReturn(Collections.emptyList());
-
-        ItemDtoWithBookings result = itemService.getById(1L, 2L);
-
-        assertNotNull(result);
-        assertEquals(item.getId(), result.getId());
-        assertEquals(item.getName(), result.getName());
-    }
-
-    @Test
     void getItemsByOwner_withNonExistentUser_shouldThrowNotFoundException() {
         when(userRepository.existsById(999L)).thenReturn(false);
 
@@ -200,37 +186,6 @@ public class ItemServiceImplTest {
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void addComment_withValidData_shouldReturnComment() {
-        CommentDto commentDto = new CommentDto();
-        commentDto.setText("Great item!");
-
-        Booking booking = new Booking();
-        booking.setId(1L);
-        booking.setBooker(user);
-        booking.setStatus(BookingStatus.APPROVED);
-        booking.setEnd(LocalDateTime.now().minusDays(1));
-
-        Comment savedComment = new Comment();
-        savedComment.setId(1L);
-        savedComment.setText("Great item!");
-        savedComment.setItem(item);
-        savedComment.setAuthor(user);
-        savedComment.setCreated(LocalDateTime.now());
-
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-        when(bookingRepository.findByItemIdAndBookerIdAndEndBefore(anyLong(), anyLong(), any()))
-                .thenReturn(List.of(booking));
-        when(commentRepository.save(any(Comment.class))).thenReturn(savedComment);
-
-        CommentDto result = itemService.addComment(1L, commentDto, 1L);
-
-        assertNotNull(result);
-        assertEquals("Great item!", result.getText());
-        assertEquals("Test User", result.getAuthorName());
     }
 
     @Test

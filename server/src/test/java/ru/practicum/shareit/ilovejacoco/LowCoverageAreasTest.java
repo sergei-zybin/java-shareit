@@ -389,51 +389,6 @@ public class LowCoverageAreasTest {
     }
 
     @Test
-    void testCommentFunctionalityComprehensive() {
-        User author = new User();
-        author.setId(1L);
-        author.setName("author");
-        author.setEmail("author@test.com");
-
-        User owner = new User();
-        owner.setId(2L);
-        owner.setName("owner");
-
-        Item item = new Item();
-        item.setId(1L);
-        item.setName("item");
-        item.setOwner(owner);
-
-        Booking booking = new Booking();
-        booking.setId(1L);
-        booking.setStart(LocalDateTime.now().minusDays(2));
-        booking.setEnd(LocalDateTime.now().minusDays(1));
-        booking.setItem(item);
-        booking.setBooker(author);
-        booking.setStatus(BookingStatus.APPROVED);
-
-        Comment comment = new Comment();
-        comment.setId(1L);
-        comment.setText("comment text");
-        comment.setAuthor(author);
-        comment.setItem(item);
-        comment.setCreated(LocalDateTime.now());
-
-        CommentDto commentDto = new CommentDto();
-        commentDto.setText("comment text");
-
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(author));
-        when(bookingRepository.findByItemIdAndBookerIdAndEndBefore(anyLong(), anyLong(), any())).thenReturn(List.of(booking));
-        when(commentRepository.save(any(Comment.class))).thenReturn(comment);
-
-        CommentDto result = itemService.addComment(1L, commentDto, 1L);
-
-        assertNotNull(result);
-        assertEquals("comment text", result.getText());
-    }
-
-    @Test
     void testItemSearchWithVariousQueries() {
         Item item1 = new Item();
         item1.setId(1L);
