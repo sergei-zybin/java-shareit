@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
@@ -72,9 +74,14 @@ public class ItemServiceImpl implements ItemService {
         item.setOwner(owner);
 
         if (itemDto.getRequestId() != null) {
-            ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequestId())
-                    .orElseThrow(() -> new NotFoundException("Запрос с id=" + itemDto.getRequestId() + " не найден."));
-            item.setRequest(itemRequest);
+            try {
+                ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequestId())
+                        .orElse(null); // Если запрос не найден, просто игнорируем
+                item.setRequest(itemRequest);
+            } catch (Exception e) {
+                log.warn("Запрос с id={} не найден, создаем вещь без привязки к запросу", itemDto.getRequestId());
+
+            }
         }
 
         return ItemMapper.toItemDto(itemRepository.save(item));

@@ -35,6 +35,10 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         User requestor = userRepository.findById(requestorId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id=" + requestorId + " не найден."));
 
+        if (itemRequestDto.getDescription() == null || itemRequestDto.getDescription().isBlank()) {
+            throw new IllegalArgumentException("Описание запроса не может быть пустым");
+        }
+
         ItemRequest itemRequest = new ItemRequest();
         itemRequest.setDescription(itemRequestDto.getDescription());
         itemRequest.setRequestor(requestor);
@@ -87,11 +91,11 @@ public class ItemRequestServiceImpl implements ItemRequestService {
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
 
-        return new ItemRequestResponseDto(
-                itemRequest.getId(),
-                itemRequest.getDescription(),
-                itemRequest.getCreated(),
-                items
-        );
+        return ItemRequestResponseDto.builder()
+                .id(itemRequest.getId())
+                .description(itemRequest.getDescription())
+                .created(itemRequest.getCreated())
+                .items(items)
+                .build();
     }
 }

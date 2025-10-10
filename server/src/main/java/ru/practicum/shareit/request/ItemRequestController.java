@@ -6,6 +6,10 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.dto.ItemRequestResponseDto;
 import ru.practicum.shareit.request.service.ItemRequestService;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -16,7 +20,7 @@ public class ItemRequestController {
     private final ItemRequestService itemRequestService;
 
     @PostMapping
-    public ItemRequestResponseDto create(@RequestBody ItemRequestDto itemRequestDto,
+    public ItemRequestResponseDto create(@RequestBody @Valid ItemRequestDto itemRequestDto,
                                          @RequestHeader("X-Sharer-User-Id") Long requestorId) {
         log.info("POST /requests - создание запроса: {}, пользователь: {}", itemRequestDto, requestorId);
         return itemRequestService.create(itemRequestDto, requestorId);
@@ -30,8 +34,8 @@ public class ItemRequestController {
 
     @GetMapping("/all")
     public List<ItemRequestResponseDto> getOtherUsersRequests(@RequestHeader("X-Sharer-User-Id") Long requestorId,
-                                                              @RequestParam(defaultValue = "0") Integer from,
-                                                              @RequestParam(defaultValue = "10") Integer size) {
+                                                              @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                                              @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("GET /requests/all - получение запросов других пользователей, пользователь: {}, from={}, size={}",
                 requestorId, from, size);
         return itemRequestService.getOtherUsersRequests(requestorId, from, size);
