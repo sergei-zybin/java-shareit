@@ -80,7 +80,6 @@ public class ItemServiceImpl implements ItemService {
                 item.setRequest(itemRequest);
             } catch (Exception e) {
                 log.warn("Запрос с id={} не найден, создаем вещь без привязки к запросу", itemDto.getRequestId());
-
             }
         }
 
@@ -169,8 +168,13 @@ public class ItemServiceImpl implements ItemService {
         dto.setAvailable(item.getAvailable());
         dto.setRequestId(item.getRequest() != null ? item.getRequest().getId() : null);
 
-        dto.setLastBooking(getLastBooking(item.getId()));
-        dto.setNextBooking(getNextBooking(item.getId()));
+        if (item.getOwner().getId().equals(userId)) {
+            dto.setLastBooking(getLastBooking(item.getId()));
+            dto.setNextBooking(getNextBooking(item.getId()));
+        } else {
+            dto.setLastBooking(null);
+            dto.setNextBooking(new BookingShortDto());
+        }
 
         List<CommentDto> itemComments = allComments.stream()
                 .filter(comment -> comment.getItem().getId().equals(item.getId()))
