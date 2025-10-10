@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,4 +20,7 @@ public class ItemDtoWithBookings {
     private Long requestId;
     private BookingShortDto lastBooking;
     private BookingShortDto nextBooking;
+
+    public void setComments(List<CommentDto> collect) {
+    }
 }
