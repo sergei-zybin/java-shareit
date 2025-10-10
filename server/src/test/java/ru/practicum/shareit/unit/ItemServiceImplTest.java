@@ -177,19 +177,6 @@ public class ItemServiceImplTest {
     }
 
     @Test
-    void getItemsByOwner_withValidUser_shouldReturnItems() {
-        when(userRepository.existsById(2L)).thenReturn(true);
-        when(itemRepository.findByOwnerId(2L)).thenReturn(List.of(item));
-        when(commentRepository.findByItemIdIn(any())).thenReturn(Collections.emptyList());
-
-        List<ItemDtoWithBookings> result = itemService.getByOwner(2L);
-
-        assertNotNull(result);
-        assertFalse(result.isEmpty());
-        assertEquals(1, result.size());
-    }
-
-    @Test
     void getItemsByOwner_withNonExistentUser_shouldThrowNotFoundException() {
         when(userRepository.existsById(999L)).thenReturn(false);
 

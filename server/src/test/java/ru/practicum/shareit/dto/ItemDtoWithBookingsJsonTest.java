@@ -28,6 +28,7 @@ class ItemDtoWithBookingsJsonTest {
 
     @BeforeEach
     void setUp() {
+
         lastBooking = new BookingShortDto();
         lastBooking.setId(1L);
         lastBooking.setBookerId(2L);
@@ -40,30 +41,27 @@ class ItemDtoWithBookingsJsonTest {
         nextBooking.setStart(LocalDateTime.now().plusDays(1));
         nextBooking.setEnd(LocalDateTime.now().plusDays(2));
 
-        comment1 = CommentDto.builder()
-                .id(1L)
-                .text("Отличная вещь!")
-                .authorName("Пользователь 1")
-                .created(LocalDateTime.now().minusDays(5))
-                .build();
+        comment1 = new CommentDto();
+        comment1.setId(1L);
+        comment1.setText("Отличная вещь!");
+        comment1.setAuthorName("Пользователь 1");
+        comment1.setCreated(LocalDateTime.now().minusDays(5));
 
-        comment2 = CommentDto.builder()
-                .id(2L)
-                .text("Очень понравилось")
-                .authorName("Пользователь 2")
-                .created(LocalDateTime.now().minusDays(3))
-                .build();
+        comment2 = new CommentDto();
+        comment2.setId(2L);
+        comment2.setText("Очень понравилось");
+        comment2.setAuthorName("Пользователь 2");
+        comment2.setCreated(LocalDateTime.now().minusDays(3));
 
-        itemDtoWithBookings = ItemDtoWithBookings.builder()
-                .id(1L)
-                .name("Дрель")
-                .description("Мощная дрель с ударным механизмом")
-                .available(true)
-                .requestId(10L)
-                .lastBooking(lastBooking)
-                .nextBooking(nextBooking)
-                .comments(List.of(comment1, comment2))
-                .build();
+        itemDtoWithBookings = new ItemDtoWithBookings();
+        itemDtoWithBookings.setId(1L);
+        itemDtoWithBookings.setName("Дрель");
+        itemDtoWithBookings.setDescription("Мощная дрель с ударным механизмом");
+        itemDtoWithBookings.setAvailable(true);
+        itemDtoWithBookings.setRequestId(10L);
+        itemDtoWithBookings.setLastBooking(lastBooking);
+        itemDtoWithBookings.setNextBooking(nextBooking);
+        itemDtoWithBookings.setComments(List.of(comment1, comment2));
     }
 
     @Test
@@ -230,16 +228,15 @@ class ItemDtoWithBookingsJsonTest {
 
     @Test
     void serialize_withNullFields_shouldHandleCorrectly() throws Exception {
-        ItemDtoWithBookings item = ItemDtoWithBookings.builder()
-                .id(1L)
-                .name("Дрель")
-                .description(null)
-                .available(null)
-                .requestId(null)
-                .lastBooking(null)
-                .nextBooking(null)
-                .comments(null)
-                .build();
+        ItemDtoWithBookings item = new ItemDtoWithBookings();
+        item.setId(1L);
+        item.setName("Дрель");
+        item.setDescription(null);
+        item.setAvailable(null);
+        item.setRequestId(null);
+        item.setLastBooking(null);
+        item.setNextBooking(null);
+        item.setComments(null);
 
         String json = objectMapper.writeValueAsString(item);
 

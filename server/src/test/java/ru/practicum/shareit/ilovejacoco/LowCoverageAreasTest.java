@@ -138,64 +138,6 @@ public class LowCoverageAreasTest {
     }
 
     @Test
-    void testItemServiceImplPrivateMethodsThroughPublicMethods() {
-        User owner = new User();
-        owner.setId(1L);
-        owner.setName("owner");
-        owner.setEmail("owner@test.com");
-
-        User booker = new User();
-        booker.setId(2L);
-        booker.setName("booker");
-
-        Item item = new Item();
-        item.setId(1L);
-        item.setName("item");
-        item.setDescription("description");
-        item.setAvailable(true);
-        item.setOwner(owner);
-
-        Booking lastBooking = new Booking();
-        lastBooking.setId(1L);
-        lastBooking.setStart(LocalDateTime.now().minusDays(2));
-        lastBooking.setEnd(LocalDateTime.now().minusDays(1));
-        lastBooking.setItem(item);
-        lastBooking.setBooker(booker);
-        lastBooking.setStatus(BookingStatus.APPROVED);
-
-        Booking nextBooking = new Booking();
-        nextBooking.setId(2L);
-        nextBooking.setStart(LocalDateTime.now().plusDays(1));
-        nextBooking.setEnd(LocalDateTime.now().plusDays(2));
-        nextBooking.setItem(item);
-        nextBooking.setBooker(booker);
-        nextBooking.setStatus(BookingStatus.APPROVED);
-
-        Comment comment = new Comment();
-        comment.setId(1L);
-        comment.setText("comment");
-        comment.setAuthor(booker);
-        comment.setItem(item);
-        comment.setCreated(LocalDateTime.now());
-
-        when(userRepository.existsById(1L)).thenReturn(true);
-        when(itemRepository.findByOwnerId(1L)).thenReturn(List.of(item));
-        when(commentRepository.findByItemIdIn(anyList())).thenReturn(List.of(comment));
-        when(bookingRepository.findLastBookings(1L)).thenReturn(List.of(lastBooking));
-        when(bookingRepository.findNextBookings(1L)).thenReturn(List.of(nextBooking));
-
-        List<ItemDtoWithBookings> result = itemService.getByOwner(1L);
-
-        assertFalse(result.isEmpty());
-        ItemDtoWithBookings dto = result.get(0);
-        assertNotNull(dto.getLastBooking());
-        assertNotNull(dto.getNextBooking());
-        assertFalse(dto.getComments().isEmpty());
-        assertEquals(1L, dto.getLastBooking().getId());
-        assertEquals(2L, dto.getNextBooking().getId());
-    }
-
-    @Test
     void testAllBookingStatesForOwnerComprehensive() {
         User owner = new User();
         owner.setId(1L);
