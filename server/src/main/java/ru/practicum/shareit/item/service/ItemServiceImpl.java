@@ -169,10 +169,8 @@ public class ItemServiceImpl implements ItemService {
         dto.setAvailable(item.getAvailable());
         dto.setRequestId(item.getRequest() != null ? item.getRequest().getId() : null);
 
-        if (item.getOwner().getId().equals(userId)) {
-            dto.setLastBooking(getLastBooking(item.getId()));
-            dto.setNextBooking(getNextBooking(item.getId()));
-        }
+        dto.setLastBooking(getLastBooking(item.getId()));
+        dto.setNextBooking(getNextBooking(item.getId()));
 
         List<CommentDto> itemComments = allComments.stream()
                 .filter(comment -> comment.getItem().getId().equals(item.getId()))
