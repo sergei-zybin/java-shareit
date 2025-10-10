@@ -36,9 +36,16 @@ wait_for()
             nc -z $WAITFORIT_HOST $WAITFORIT_PORT
             WAITFORIT_result=$?
         else
-#            (echo -n > /dev/tcp/$WAITFORIT_HOST/$WAITFORIT_PORT) >/dev/null 2>&1
-            (curl --fail --silent $WAITFORIT_HOST:$WAITFORIT_PORT/actuator/health | grep UP) >/dev/null 2>&1
+            # Try both port check and health endpoint
+            (echo -n > /dev/tcp/$WAITFORIT_HOST/$WAITFORIT_PORT) >/dev/null 2>&1
             WAITFORIT_result=$?
+            if [[ $WAITFORIT_result -eq 0 ]]; then
+                # If port is open, also check health endpoint if it's a known service port
+                if [[ $WAITFORIT_PORT -eq 8080 || $WAITFORIT_PORT -eq 9090 ]]; then
+                    (curl -f --silent http://$WAITFORIT_HOST:$WAITFORIT_PORT/actuator/health | grep -q '"status":"UP"') >/dev/null 2>&1
+                    WAITFORIT_result=$?
+                fi
+            fi
         fi
         if [[ $WAITFORIT_result -eq 0 ]]; then
             WAITFORIT_end_ts=$(date +%s)
@@ -137,7 +144,7 @@ if [[ "$WAITFORIT_HOST" == "" || "$WAITFORIT_PORT" == "" ]]; then
     usage
 fi
 
-WAITFORIT_TIMEOUT=${WAITFORIT_TIMEOUT:-15}
+WAITFORIT_TIMEOUT=${WAITFORIT_TIMEOUT:-120}
 WAITFORIT_STRICT=${WAITFORIT_STRICT:-0}
 WAITFORIT_CHILD=${WAITFORIT_CHILD:-0}
 WAITFORIT_QUIET=${WAITFORIT_QUIET:-0}

@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   gateway:
     build: gateway
@@ -10,6 +12,14 @@ services:
         condition: service_healthy
     environment:
       - SHAREIT_SERVER_URL=http://server:9090
+    networks:
+      - shareit-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   server:
     build: server
@@ -24,12 +34,15 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/shareit
       - SPRING_DATASOURCE_USERNAME=shareit
       - SPRING_DATASOURCE_PASSWORD=shareit
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - shareit-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 60s
+      retries: 3
+      start_period: 40s
 
   db:
     image: postgres:16.1
@@ -40,17 +53,15 @@ services:
       - POSTGRES_PASSWORD=shareit
       - POSTGRES_USER=shareit
       - POSTGRES_DB=shareit
-    volumes:
-      - ./init-scripts:/docker-entrypoint-initdb.d
-    command: >
-      bash -c "
-        chmod 644 /docker-entrypoint-initdb.d/*.sql 2>/dev/null || true &&
-        chmod 755 /docker-entrypoint-initdb.d/ 2>/dev/null || true &&
-        docker-entrypoint.sh postgres
-      "
+    networks:
+      - shareit-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d shareit -U shareit"]
-      timeout: 10s
+      test: ["CMD-SHELL", "pg_isready -U shareit -d shareit"]
       interval: 10s
-      retries: 15
-      start_period: 45s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  shareit-network:
+    driver: bridge
