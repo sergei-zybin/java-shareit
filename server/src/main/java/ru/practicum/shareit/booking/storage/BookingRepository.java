@@ -41,6 +41,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findLastBookings(Long itemId);
 
     @Query("SELECT b FROM Booking b WHERE b.item.id = :itemId AND b.booker.id = :bookerId " +
-            "AND b.end < :endTime AND b.status = 'APPROVED'")
+            "AND b.end < :endTime")
     List<Booking> findByItemIdAndBookerIdAndEndBefore(Long itemId, Long bookerId, LocalDateTime endTime);
 }

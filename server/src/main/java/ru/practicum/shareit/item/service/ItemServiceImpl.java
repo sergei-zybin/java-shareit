@@ -141,30 +141,49 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public CommentDto addComment(Long itemId, CommentDto commentDto, Long authorId) {
+        log.info("Adding comment for itemId: {}, authorId: {}, text: {}",
+                itemId, authorId, commentDto.getText());
+
+        if (commentDto.getText() == null || commentDto.getText().isBlank()) {
+            throw new ValidationException("Текст комментария не может быть пустым.");
+        }
+
+        if (commentDto.getText().length() > 1000) {
+            throw new ValidationException("Длина комментария не может превышать 1000 символов.");
+        }
+
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Вещь с id=" + itemId + " не найдена."));
 
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id=" + authorId + " не найден."));
 
+
         List<Booking> userBookings = bookingRepository.findByItemIdAndBookerIdAndEndBefore(
                 itemId, authorId, LocalDateTime.now());
+
+        log.info("Found {} past bookings for itemId: {}, authorId: {}",
+                userBookings.size(), itemId, authorId);
 
         if (userBookings.isEmpty()) {
             throw new ValidationException("Пользователь не брал эту вещь в аренду или аренда еще не завершена.");
         }
 
         Comment comment = new Comment();
-        comment.setText(commentDto.getText());
+        comment.setText(commentDto.getText().trim());
         comment.setItem(item);
         comment.setAuthor(author);
         comment.setCreated(LocalDateTime.now());
 
         Comment savedComment = commentRepository.save(comment);
 
+        // Перезагружаем комментарий с автором для корректного отображения
         Comment commentWithAuthor = commentRepository.findByIdWithAuthor(savedComment.getId());
 
-        return toCommentDto(commentWithAuthor);
+        CommentDto result = toCommentDto(commentWithAuthor);
+        log.info("Successfully created comment with id: {}", result.getId());
+
+        return result;
     }
 
     private ItemDtoWithBookings toItemDtoWithBookings(Item item, Long userId, List<Comment> allComments) {

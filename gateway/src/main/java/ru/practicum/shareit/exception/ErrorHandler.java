@@ -28,35 +28,39 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleConstraintViolationException(final ConstraintViolationException e) {
         log.error("Constraint violation: {}", e.getMessage());
-        return Map.of("error", "Validation failed");
+        return Map.of("error", "Validation failed: " + e.getMessage());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
         log.error("Method argument not valid: {}", e.getMessage());
-        return Map.of("error", "Validation failed");
+        String errorMessage = e.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation failed");
+        return Map.of("error", errorMessage);
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleMissingRequestHeaderException(final MissingRequestHeaderException e) {
         log.error("Missing request header: {}", e.getMessage());
-        return Map.of("error", "Required header is missing");
+        return Map.of("error", "Required header is missing: " + e.getHeaderName());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleMissingServletRequestParameterException(final MissingServletRequestParameterException e) {
         log.error("Missing request parameter: {}", e.getMessage());
-        return Map.of("error", "Required parameter is missing");
+        return Map.of("error", "Required parameter is missing: " + e.getParameterName());
     }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleMethodArgumentTypeMismatchException(final MethodArgumentTypeMismatchException e) {
         log.error("Method argument type mismatch: {}", e.getMessage());
-        return Map.of("error", "Invalid parameter type");
+        return Map.of("error", "Invalid parameter type for: " + e.getName());
     }
 
     @ExceptionHandler
