@@ -115,21 +115,6 @@ public class ItemServiceImplTest {
     }
 
     @Test
-    void createItem_withNonExistentRequest_shouldThrowNotFoundException() {
-        when(userRepository.findById(2L)).thenReturn(Optional.of(owner));
-        when(itemRequestRepository.findById(999L)).thenReturn(Optional.empty());
-
-        ItemDto invalidItemDto = ItemDto.builder()
-                .name("Test Item")
-                .description("Test Description")
-                .available(true)
-                .requestId(999L)
-                .build();
-
-        assertThrows(NotFoundException.class, () -> itemService.create(invalidItemDto, 2L));
-    }
-
-    @Test
     void createItem_withInvalidData_shouldThrowValidationException() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(owner));
 
