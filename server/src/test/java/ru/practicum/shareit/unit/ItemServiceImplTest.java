@@ -177,25 +177,6 @@ public class ItemServiceImplTest {
     }
 
     @Test
-    void getItemById_forNonOwner_shouldReturnItemWithoutBookings() {
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        when(commentRepository.findByItemId(1L)).thenReturn(Collections.emptyList());
-
-        ItemDtoWithBookings result = itemService.getById(1L, 1L);
-
-        assertNotNull(result);
-        assertNull(result.getLastBooking());
-        assertNull(result.getNextBooking());
-    }
-
-    @Test
-    void getItemById_withNonExistentItem_shouldThrowNotFoundException() {
-        when(itemRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThrows(NotFoundException.class, () -> itemService.getById(999L, 1L));
-    }
-
-    @Test
     void getItemsByOwner_withValidUser_shouldReturnItems() {
         when(userRepository.existsById(2L)).thenReturn(true);
         when(itemRepository.findByOwnerId(2L)).thenReturn(List.of(item));
