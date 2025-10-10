@@ -18,7 +18,12 @@ public class ItemDtoWithBookings {
     private String description;
     private Boolean available;
     private Long requestId;
-    private BookingShortDto lastBooking;
-    private BookingShortDto nextBooking;
+
+    @Builder.Default
+    private BookingShortDto lastBooking = null;
+
+    @Builder.Default
+    private BookingShortDto nextBooking = null;
+
     private List<CommentDto> comments;
 }
