@@ -45,8 +45,12 @@ public class ItemServiceImpl implements ItemService {
         }
 
         List<Item> items = itemRepository.findByOwnerId(ownerId);
+        List<Long> itemIds = items.stream().map(Item::getId).collect(Collectors.toList());
+
+        List<Comment> allComments = commentRepository.findByItemIdInWithAuthors(itemIds);
+
         return items.stream()
-                .map(item -> toItemDtoWithBookings(item, ownerId))
+                .map(item -> toItemDtoWithBookings(item, ownerId, allComments))
                 .collect(Collectors.toList());
     }
 
@@ -55,7 +59,11 @@ public class ItemServiceImpl implements ItemService {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Вещь с id=" + id + " не найдена."));
 
-        return toItemDtoWithBookings(item, userId);
+        List<Comment> comments = commentRepository.findByItemIdWithAuthor(id);
+
+        log.info("Found {} comments for item id: {}", comments.size(), id);
+
+        return toItemDtoWithBookings(item, userId, comments);
     }
 
     @Override
@@ -143,7 +151,7 @@ public class ItemServiceImpl implements ItemService {
                 itemId, authorId, LocalDateTime.now());
 
         if (userBookings.isEmpty()) {
-            throw new ValidationException("Пользователь не брал эту вещь в аренду.");
+            throw new ValidationException("Пользователь не брал эту вещь в аренду или аренда еще не завершена.");
         }
 
         Comment comment = new Comment();
@@ -153,11 +161,13 @@ public class ItemServiceImpl implements ItemService {
         comment.setCreated(LocalDateTime.now());
 
         Comment savedComment = commentRepository.save(comment);
-        return toCommentDto(savedComment);
+
+        Comment commentWithAuthor = commentRepository.findByIdWithAuthor(savedComment.getId());
+
+        return toCommentDto(commentWithAuthor);
     }
 
-    private ItemDtoWithBookings toItemDtoWithBookings(Item item, Long userId) {
-
+    private ItemDtoWithBookings toItemDtoWithBookings(Item item, Long userId, List<Comment> allComments) {
         ItemDtoWithBookings dto = new ItemDtoWithBookings();
         dto.setId(item.getId());
         dto.setName(item.getName());
@@ -165,100 +175,48 @@ public class ItemServiceImpl implements ItemService {
         dto.setAvailable(item.getAvailable());
         dto.setRequestId(item.getRequest() != null ? item.getRequest().getId() : null);
 
-        dto.setLastBooking(null);
-        dto.setNextBooking(null);
-
-        List<Comment> comments = commentRepository.findByItemId(item.getId());
-        dto.setComments(comments.stream()
-                .map(this::toCommentDto)
-                .collect(Collectors.toList()));
-
-        boolean isOwner = item.getOwner().getId().equals(userId);
-        log.debug("Item ID: {}, User ID: {}, Is Owner: {}", item.getId(), userId, isOwner);
-
-        if (isOwner) {
-            if (isCommentTestScenario(item, comments)) {
-                log.debug("Applying test scenario logic for item: {}", item.getId());
-                dto.setLastBooking(null);
-                dto.setNextBooking(createTestNextBooking());
-            } else {
-                dto.setLastBooking(getLastBooking(item.getId()));
-                dto.setNextBooking(getNextBooking(item.getId()));
-            }
+        if (item.getOwner().getId().equals(userId)) {
+            dto.setLastBooking(getLastBooking(item.getId()));
+            dto.setNextBooking(getNextBooking(item.getId()));
         }
 
-        log.debug("Final DTO - lastBooking: {}, nextBooking: {}", dto.getLastBooking(), dto.getNextBooking());
+        List<CommentDto> itemComments = allComments.stream()
+                .filter(comment -> comment.getItem().getId().equals(item.getId()))
+                .map(this::toCommentDto)
+                .collect(Collectors.toList());
+
+        dto.setComments(itemComments);
         return dto;
     }
 
     private BookingShortDto getLastBooking(Long itemId) {
-        try {
-            List<Booking> lastBookings = bookingRepository.findLastBookings(itemId);
-            if (!lastBookings.isEmpty()) {
-                Booking booking = lastBookings.get(0);
-                return BookingShortDto.builder()
-                        .id(booking.getId())
-                        .bookerId(booking.getBooker().getId())
-                        .start(booking.getStart())
-                        .end(booking.getEnd())
-                        .build();
-            }
-        } catch (Exception e) {
-            log.warn("Error getting last booking for item {}: {}", itemId, e.getMessage());
+        List<Booking> lastBookings = bookingRepository.findLastBookings(itemId);
+        if (!lastBookings.isEmpty()) {
+            Booking booking = lastBookings.get(0);
+            return new BookingShortDto(booking.getId(), booking.getBooker().getId(),
+                    booking.getStart(), booking.getEnd());
         }
         return null;
     }
 
     private BookingShortDto getNextBooking(Long itemId) {
-        try {
-            List<Booking> nextBookings = bookingRepository.findNextBookings(itemId);
-            if (!nextBookings.isEmpty()) {
-                Booking booking = nextBookings.get(0);
-                return BookingShortDto.builder()
-                        .id(booking.getId())
-                        .bookerId(booking.getBooker().getId())
-                        .start(booking.getStart())
-                        .end(booking.getEnd())
-                        .build();
-            }
-
-            List<Booking> currentBookings = bookingRepository.findCurrentActiveBookings(itemId);
-            if (!currentBookings.isEmpty()) {
-                Booking booking = currentBookings.get(0);
-                return BookingShortDto.builder()
-                        .id(booking.getId())
-                        .bookerId(booking.getBooker().getId())
-                        .start(booking.getStart())
-                        .end(booking.getEnd())
-                        .build();
-            }
-        } catch (Exception e) {
-            log.warn("Error getting next booking for item {}: {}", itemId, e.getMessage());
+        List<Booking> nextBookings = bookingRepository.findNextBookings(itemId);
+        if (!nextBookings.isEmpty()) {
+            Booking booking = nextBookings.get(0);
+            return new BookingShortDto(booking.getId(), booking.getBooker().getId(),
+                    booking.getStart(), booking.getEnd());
         }
         return null;
     }
 
-    private BookingShortDto createTestNextBooking() {
-        return BookingShortDto.builder()
-                .id(18L)
-                .bookerId(53L)
-                .start(LocalDateTime.now().plusDays(1))
-                .end(LocalDateTime.now().plusDays(3))
-                .build();
-    }
-
-    public boolean isCommentTestScenario(Item item, List<Comment> comments) {
-
-        boolean hasComments = comments != null && !comments.isEmpty();
-        log.debug("Item {} has comments: {}", item.getId(), hasComments);
-        return hasComments;
-    }
-
     private CommentDto toCommentDto(Comment comment) {
+        if (comment == null) {
+            return null;
+        }
         return CommentDto.builder()
                 .id(comment.getId())
                 .text(comment.getText())
-                .authorName(comment.getAuthor().getName())
+                .authorName(comment.getAuthor() != null ? comment.getAuthor().getName() : "Unknown")
                 .created(comment.getCreated())
                 .build();
     }

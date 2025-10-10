@@ -33,7 +33,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findCurrentByOwnerId(Long ownerId, LocalDateTime now);
 
     @Query("SELECT b FROM Booking b WHERE b.item.id = :itemId AND b.status = 'APPROVED' " +
-            "AND b.start > CURRENT_TIMESTAMP ORDER BY b.start ASC")
+            "AND b.end > CURRENT_TIMESTAMP ORDER BY b.start ASC")
     List<Booking> findNextBookings(Long itemId);
 
     @Query("SELECT b FROM Booking b WHERE b.item.id = :itemId AND b.status = 'APPROVED' " +
@@ -43,8 +43,4 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.item.id = :itemId AND b.booker.id = :bookerId " +
             "AND b.end < :endTime AND b.status = 'APPROVED'")
     List<Booking> findByItemIdAndBookerIdAndEndBefore(Long itemId, Long bookerId, LocalDateTime endTime);
-
-    @Query("SELECT b FROM Booking b WHERE b.item.id = :itemId AND b.status = 'APPROVED' " +
-            "AND b.start <= CURRENT_TIMESTAMP AND b.end >= CURRENT_TIMESTAMP ORDER BY b.start ASC")
-    List<Booking> findCurrentActiveBookings(Long itemId);
 }
